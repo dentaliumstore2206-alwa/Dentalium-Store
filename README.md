@@ -38,3 +38,5 @@ npm run dev
 No izin PAK FK.01.01/VI/163/2017
 
 VERSION: 1.0.0
+cd /workspaces/Dentalium-Store
+npm run dev

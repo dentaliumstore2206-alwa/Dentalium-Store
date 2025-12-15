@@ -23,8 +23,8 @@ export default function Header({ cartCount, onCartClick }) {
     }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', marginRight: '20px' }}>
-            DENTALIUM STORE
+          <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#ff0000', marginRight: '20px' }}>
+            🏥 DENTALIUM
           </div>
           <div style={{ fontSize: '14px', color: '#333' }}>
             Distributor alat kesehatan terpercaya Indonesia
@@ -32,7 +32,7 @@ export default function Header({ cartCount, onCartClick }) {
         </div>
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{ display: 'none', '@media (min-width: 768px)': { display: 'flex' } }}>
+          <div style={{ display: 'flex' }}>
             {navItems.map(item => (
               <a key={item.name} href={item.href} style={{ color: '#000', textDecoration: 'none', padding: '5px 10px', borderRadius: '4px', transition: 'background 0.3s' }} onMouseOver={(e) => e.target.style.background = '#add8e6'} onMouseOut={(e) => e.target.style.background = 'transparent'}>
                 {item.name}
