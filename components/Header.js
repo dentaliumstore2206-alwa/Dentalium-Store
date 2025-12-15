@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ShoppingCart, Menu, X } from 'lucide-react'
+import Logo from './Logo'
 
 export default function Header({ cartCount, onCartClick }) {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -9,6 +10,8 @@ export default function Header({ cartCount, onCartClick }) {
     { name: 'Filter Produk', href: '#filter' },
     { name: 'Informasi Perusahaan', href: '/info' },
     { name: 'Kontak Kami', href: '/contact' },
+    { name: 'Riwayat Pesanan', href: '/orders' },
+    { name: 'Admin Panel', href: '/admin' },
   ]
 
   return (
@@ -23,10 +26,8 @@ export default function Header({ cartCount, onCartClick }) {
     }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#ff0000', marginRight: '20px' }}>
-            🏥 DENTALIUM
-          </div>
-          <div style={{ fontSize: '14px', color: '#333' }}>
+          <Logo />
+          <div style={{ fontSize: '14px', color: '#333', marginLeft: '20px' }}>
             Distributor alat kesehatan terpercaya Indonesia
           </div>
         </div>

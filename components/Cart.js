@@ -19,9 +19,30 @@ export default function Cart({ isOpen, onClose, cart, updateCart }) {
       return
     }
 
-    const message = `Halo, saya ingin memesan:\n${cart.map(item => `${item.name} - ${item.quantity} pcs - $${(item.price * item.quantity).toFixed(2)}`).join('\n')}\nTotal: $${cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}`
+    const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    const message = `Halo, saya ingin memesan:\n${cart.map(item => `${item.name} - ${item.quantity} pcs - $${(item.price * item.quantity).toFixed(2)}`).join('\n')}\nTotal: $${total.toFixed(2)}`
+
+    // Save to order history
+    const order = {
+      id: Date.now(),
+      date: new Date().toISOString(),
+      customer: formData,
+      items: cart,
+      total,
+      status: 'Pending',
+      whatsappMessage: message
+    }
+
+    const existingOrders = JSON.parse(localStorage.getItem('order_history') || '[]')
+    existingOrders.push(order)
+    localStorage.setItem('order_history', JSON.stringify(existingOrders))
+
     const whatsappUrl = `https://wa.me/628116391122?text=${encodeURIComponent(message)}`
     window.open(whatsappUrl, '_blank')
+
+    // Clear cart after checkout
+    setCart([])
+    onClose()
   }
 
   const handleRegister = (e) => {
