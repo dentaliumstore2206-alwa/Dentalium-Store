@@ -1,8 +1,22 @@
+import { useState, useEffect } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import LiveChat from '../components/LiveChat'
 
 export default function Info() {
+  const [officePhotos, setOfficePhotos] = useState({ photo1: '', photo2: '' })
+
+  useEffect(() => {
+    const settings = localStorage.getItem('site_settings')
+    if (settings) {
+      const parsed = JSON.parse(settings)
+      setOfficePhotos({
+        photo1: parsed.officePhoto1,
+        photo2: parsed.officePhoto2
+      })
+    }
+  }, [])
+
   return (
     <div style={{ fontFamily: 'Inter, system-ui, -apple-system, Roboto, sans-serif', minHeight: '100vh', background: '#f9f9f9' }}>
       <Header cartCount={0} onCartClick={() => {}} />
@@ -14,6 +28,24 @@ export default function Info() {
           <h2>Profil Perusahaan</h2>
           <p>PT DENTALIUM STORE INDONESIA, yang lebih dikenal dengan merek DENTALIUM STORE, adalah web e-commerce yang bergerak di bidang kesehatan di Indonesia. Mereka menyediakan sistem informasi manajemen rumah sakit (SIMRS) dan berbagai layanan teknologi lainnya untuk mendukung operasional fasilitas kesehatan agar lebih efisien dan terintegrasi, dan menyediakan fasilitas kesehatan seperti rumah sakit, klinik, apotek, dan laboratorium.</p>
         </section>
+
+        {(officePhotos.photo1 || officePhotos.photo2) && (
+          <section style={{ background: '#fff', padding: '30px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', marginBottom: '20px' }}>
+            <h2>Foto Kantor & Fasilitas</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+              {officePhotos.photo1 && (
+                <div>
+                  <img src={officePhotos.photo1} alt="Kantor DENTALIUM STORE" style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }} />
+                </div>
+              )}
+              {officePhotos.photo2 && (
+                <div>
+                  <img src={officePhotos.photo2} alt="Fasilitas DENTALIUM STORE" style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }} />
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         <section style={{ background: '#fff', padding: '30px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', marginBottom: '20px' }}>
           <h2>Informasi Legal & Registrasi</h2>

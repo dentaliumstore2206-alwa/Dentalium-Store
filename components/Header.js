@@ -1,9 +1,18 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ShoppingCart, Menu, X } from 'lucide-react'
 import Logo from './Logo'
 
 export default function Header({ cartCount, onCartClick }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [customLogoUrl, setCustomLogoUrl] = useState('')
+
+  useEffect(() => {
+    const settings = localStorage.getItem('site_settings')
+    if (settings) {
+      const parsed = JSON.parse(settings)
+      setCustomLogoUrl(parsed.logoUrl)
+    }
+  }, [])
 
   const navItems = [
     { name: 'Kategori Produk', href: '#categories' },
@@ -26,7 +35,7 @@ export default function Header({ cartCount, onCartClick }) {
     }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Logo />
+          <Logo customLogoUrl={customLogoUrl} />
           <div style={{ fontSize: '14px', color: '#333', marginLeft: '20px' }}>
             Distributor alat kesehatan terpercaya Indonesia
           </div>
@@ -69,7 +78,7 @@ export default function Header({ cartCount, onCartClick }) {
             </button>
           </div>
 
-          <button onClick={() => setMenuOpen(!menuOpen)} style={{ display: 'block', '@media (min-width: 768px)': { display: 'none' }, background: 'transparent', border: 'none', cursor: 'pointer' }}>
+          <button onClick={() => setMenuOpen(!menuOpen)} style={{ display: 'none', background: 'transparent', border: 'none', cursor: 'pointer' }}>
             {menuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </nav>

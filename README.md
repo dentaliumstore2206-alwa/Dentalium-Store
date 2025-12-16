@@ -20,22 +20,11 @@ npm run dev
 ```
 
 ## Features
-- 125+ Medical Products across 5 categories (Instruments, Consumables, Diagnostics, Protective, Medications)
-- Search & Filter by category and name
-- Shopping Cart with registration requirement
-- WhatsApp integration for orders
-- Live chat support
-- Responsive Design with Red-White-Light Blue theme
-- Company information and contact pages
-- Fast Performance with Next.js
-
-## Color Theme
-- Red: #ff0000
-- White: #ffffff
-- Light Blue: #add8e6
-
-## Legal Information
-No izin PAK FK.01.01/VI/163/2017
+- 110+ Medical Products
+- Search & Filter
+- Shopping Cart
+- Responsive Design
+- Fast Performance
 
 VERSION: 1.0.0
 cd /workspaces/Dentalium-Store

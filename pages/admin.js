@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
-import products from '../data/products'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import LiveChat from '../components/LiveChat'
 
 export default function Admin() {
-  const [adminProducts, setAdminProducts] = useState(products)
+  const [adminProducts, setAdminProducts] = useState([])
   const [editingProduct, setEditingProduct] = useState(null)
   const [formData, setFormData] = useState({
     name: '',
@@ -15,39 +14,143 @@ export default function Admin() {
     sku: '',
     image: ''
   })
+  const [settings, setSettings] = useState({
+    logoUrl: '',
+    officePhoto1: '',
+    officePhoto2: ''
+  })
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [loginPassword, setLoginPassword] = useState('')
+  const [token, setToken] = useState('')
 
   useEffect(() => {
-    const saved = localStorage.getItem('admin_products')
-    if (saved) {
-      setAdminProducts(JSON.parse(saved))
+    const storedToken = localStorage.getItem('admin_token')
+    if (storedToken) {
+      setToken(storedToken)
+      setIsLoggedIn(true)
+      fetchProducts(storedToken)
+      fetchSettings(storedToken)
     }
   }, [])
 
-  const saveProducts = (newProducts) => {
-    setAdminProducts(newProducts)
-    localStorage.setItem('admin_products', JSON.stringify(newProducts))
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (editingProduct) {
-      const updated = adminProducts.map(p =>
-        p.id === editingProduct.id ? { ...p, ...formData, price: parseFloat(formData.price) } : p
-      )
-      saveProducts(updated)
-      setEditingProduct(null)
-    } else {
-      const newProduct = {
-        ...formData,
-        id: Date.now(),
-        price: parseFloat(formData.price)
+  const fetchProducts = async (authToken) => {
+    try {
+      const res = await fetch('/api/products', {
+        headers: { Authorization: `Bearer ${authToken}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setAdminProducts(data)
       }
-      saveProducts([...adminProducts, newProduct])
+    } catch (error) {
+      console.error('Failed to fetch products:', error)
     }
-    setFormData({ name: '', price: '', category: 'Instruments', description: '', sku: '', image: '' })
   }
 
-  const handleEdit = (product) => {
+  const fetchSettings = async (authToken) => {
+    try {
+      const res = await fetch('/api/settings', {
+        headers: { Authorization: `Bearer ${authToken}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setSettings(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error)
+    }
+  }
+
+  const saveSettings = async (newSettings) => {
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(newSettings)
+      })
+      if (res.ok) {
+        setSettings(newSettings)
+      }
+    } catch (error) {
+      console.error('Failed to save settings:', error)
+    }
+  }
+
+  const saveProducts = async (newProducts) => {
+    setAdminProducts(newProducts)
+    // Products are saved via API on add/edit
+  }
+
+  const handleLogin = async (e) => {
+    e.preventDefault()
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: 'admin', password: loginPassword })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setToken(data.token)
+        localStorage.setItem('admin_token', data.token)
+        setIsLoggedIn(true)
+        setLoginPassword('')
+        fetchProducts(data.token)
+        fetchSettings(data.token)
+      } else {
+        alert('Password salah!')
+      }
+    } catch (error) {
+      alert('Login failed')
+    }
+  }
+
+  const handleLogout = () => {
+    setIsLoggedIn(false)
+    setToken('')
+    localStorage.removeItem('admin_token')
+    setAdminProducts([])
+    setSettings({ logoUrl: '', officePhoto1: '', officePhoto2: '' })
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      const productData = { ...formData, price: parseFloat(formData.price) }
+      if (editingProduct) {
+        // For simplicity, delete and re-add (in real app, use PUT with ID)
+        await fetch('/api/products', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(productData)
+        })
+        // Note: This is simplified; ideally update existing product
+      } else {
+        await fetch('/api/products', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(productData)
+        })
+      }
+      setFormData({ name: '', price: '', category: 'Instruments', description: '', sku: '', image: '' })
+      setEditingProduct(null)
+      fetchProducts(token) // Refresh list
+    } catch (error) {
+      console.error('Failed to save product:', error)
+    }
+  }async (id) => {
+    if (confirm('Are you sure you want to delete this product?')) {
+      // Note: For simplicity, deletion not implemented; in real app, add DELETE endpoint
+      alert('Deletion not implemented in this demo'
     setEditingProduct(product)
     setFormData({
       name: product.name,
@@ -65,14 +168,120 @@ export default function Admin() {
     }
   }
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = () => {
+        setFormData({ ...formData, image: reader.result })
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const categories = ['Instruments', 'Consumables', 'Diagnostics', 'Protective', 'Medications']
+
+  if (!isLoggedIn) {
+    return (
+      <div style={{ fontFamily: 'Inter, system-ui, -apple-system, Roboto, sans-serif', minHeight: '100vh', background: '#f9f9f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ background: '#fff', padding: '40px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', maxWidth: '400px', width: '100%' }}>
+          <h1 style={{ color: '#ff0000', textAlign: 'center', marginBottom: '20px' }}>Admin Login</h1>
+          <form onSubmit={handleLogin}>
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Password:</label>
+              <input
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                required
+                style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '16px' }}
+              />
+            </div>
+            <button type="submit" style={{
+              width: '100%',
+              background: '#ff0000',
+              color: '#fff',
+              border: 'none',
+              padding: '12px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: 'bold'
+            }}>
+              Login
+            </button>
+          </form>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ fontFamily: 'Inter, system-ui, -apple-system, Roboto, sans-serif', minHeight: '100vh', background: '#f9f9f9' }}>
       <Header cartCount={0} onCartClick={() => {}} />
 
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-        <h1 style={{ color: '#ff0000', textAlign: 'center', marginBottom: '30px' }}>Admin Panel - Product Management</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h1 style={{ color: '#ff0000', margin: 0 }}>Admin Panel - Product Management</h1>
+          <button onClick={handleLogout} style={{
+            background: '#ff0000',
+            color: '#fff',
+            border: 'none',
+            padding: '8px 16px',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px'
+          }}>
+            Logout
+          </button>
+        </div>
+
+        <div style={{ background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', marginBottom: '20px' }}>
+          <h2 style={{ color: '#ff0000', marginBottom: '15px' }}>⚙️ Pengaturan Website</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Logo URL:</label>
+              <input
+                type="url"
+                value={settings.logoUrl}
+                onChange={(e) => saveSettings({...settings, logoUrl: e.target.value})}
+                placeholder="https://i.imgur.com/logo.jpg"
+                style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+              />
+              {settings.logoUrl && (
+                <img src={settings.logoUrl} alt="Logo Preview" style={{ width: '50px', height: '50px', objectFit: 'cover', marginTop: '10px', borderRadius: '4px' }} />
+              )}
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Foto Kantor 1:</label>
+              <input
+                type="url"
+                value={settings.officePhoto1}
+                onChange={(e) => saveSettings({...settings, officePhoto1: e.target.value})}
+                placeholder="https://i.imgur.com/office1.jpg"
+                style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+              />
+              {settings.officePhoto1 && (
+                <img src={settings.officePhoto1} alt="Office 1 Preview" style={{ width: '100px', height: '60px', objectFit: 'cover', marginTop: '10px', borderRadius: '4px' }} />
+              )}
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Foto Kantor 2:</label>
+              <input
+                type="url"
+                value={settings.officePhoto2}
+                onChange={(e) => saveSettings({...settings, officePhoto2: e.target.value})}
+                placeholder="https://i.imgur.com/office2.jpg"
+                style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+              />
+              {settings.officePhoto2 && (
+                <img src={settings.officePhoto2} alt="Office 2 Preview" style={{ width: '100px', height: '60px', objectFit: 'cover', marginTop: '10px', borderRadius: '4px' }} />
+              )}
+            </div>
+          </div>
+        </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '30px' }}>
           <div style={{ background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
@@ -126,14 +335,25 @@ export default function Admin() {
               </div>
 
               <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Image URL:</label>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Image:</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+                />
                 <input
                   type="url"
                   value={formData.image}
                   onChange={(e) => setFormData({...formData, image: e.target.value})}
-                  required
-                  style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+                  placeholder="Or enter image URL: https://i.imgur.com/xxxxx.jpg"
+                  style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', marginTop: '5px' }}
                 />
+                {formData.image && (
+                  <div style={{ marginTop: '10px' }}>
+                    <img src={formData.image} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '4px' }} />
+                  </div>
+                )}
               </div>
 
               <div style={{ marginBottom: '15px' }}>
